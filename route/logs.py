@@ -13,7 +13,7 @@ PROTOCOL_MAP = {6: 'TCP', 17: 'UDP', 1: 'ICMP', 2: 'IGMP', 58: 'ICMPv6'}
 
 def es_client():
     return AsyncElasticsearch(
-        'https://localhost:9200',
+        'https://host.containers.internal:9200',
         basic_auth=('elastic', 'placeholder123'),
         verify_certs=False,
         ssl_show_warn=False,
