@@ -6,7 +6,7 @@ from elasticsearch import AsyncElasticsearch
 
 router = APIRouter()
 
-ES_INDEX = 'tmp'
+ES_INDEX = 'plugin-abp'
 
 PROTOCOL_MAP = {6: 'TCP', 17: 'UDP', 1: 'ICMP', 2: 'IGMP', 58: 'ICMPv6'}
 
@@ -69,7 +69,7 @@ async def getLogs(
         resp = await es.search(
             index=ES_INDEX,
             query=query,
-            sort=[{'timestamp': {'order': 'desc', 'unmapped_type': 'date'}}],
+            sort=[{'timestamp.keyword': {'order': 'desc', 'unmapped_type': 'keyword'}}],
             size=size,
             from_=offset,
         )
