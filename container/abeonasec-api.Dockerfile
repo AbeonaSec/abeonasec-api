@@ -1,11 +1,10 @@
-# using python 3.12 container
-FROM python:3.12
-RUN add-apt-repository ppa:graphics-drivers &&\
-  apt-get update && apt-get install -y curl nvidia-utils-535-server && rm -rf /var/lib/apt/lists/*
+# using ubuntu container so we can install nvidia server utils for gpu monitoring
+FROM ubuntu:24.04
+RUN apt-get update && apt-get install -y curl python3 python3-pip nvidia-utils-535-server && rm -rf /var/lib/apt/lists/*
 
 # copy requirements.txt and pip install
 COPY container/requirements.txt .
-RUN pip install -r requirements.txt
+RUN pip install -r requirements.txt --break-system-packages
 
 WORKDIR /app
 
