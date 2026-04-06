@@ -1,6 +1,7 @@
 # using python 3.12 container
 FROM python:3.12
-RUN apt-get update && apt-get install -y curl nvidia-utils-535 && rm -rf /var/lib/apt/lists/*
+RUN add-apt-repository ppa:graphics-drivers &&\
+  apt-get update && apt-get install -y curl nvidia-utils-535-server && rm -rf /var/lib/apt/lists/*
 
 # copy requirements.txt and pip install
 COPY container/requirements.txt .
