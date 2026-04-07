@@ -1,7 +1,59 @@
 import sys
+from ipaddress import IPv6Address
+
 FILE_READ_BUFFER_SIZE = 32 * 1024
 ENCODING = sys.getfilesystemencoding()
 ENCODING_ERRS = sys.getfilesystemencodeerrors()
+
+PROC_1_PATH = '/proc/1'
+
+
+def _sysfs_read(name, attr, default=None):
+    try:
+        with open(f'/sys/class/net/{name}/{attr}') as f:
+            return f.read().strip()
+    except OSError:
+        return default
+
+
+def get_host_iface_meta(iface_names):
+    result = {}
+    for name in iface_names:
+        operstate = _sysfs_read(name, 'operstate', 'unknown')
+        isup = operstate in ('up', 'unknown')
+        try:
+            speed = int(_sysfs_read(name, 'speed', '-1'))
+            speed = None if speed < 0 else speed
+        except (ValueError, TypeError):
+            speed = None
+        try:
+            mtu = int(_sysfs_read(name, 'mtu', '0'))
+        except (ValueError, TypeError):
+            mtu = None
+        mac = _sysfs_read(name, 'address')
+        result[name] = {'isup': isup, 'speed_mbps': speed, 'mtu': mtu, 'mac': mac}
+    return result
+
+
+def get_host_iface_v6(proc_path=PROC_1_PATH):  # proc_path kept for testability
+    addrs: dict[str, list] = {}
+    try:
+        with open_text(f'{proc_path}/net/if_inet6') as f:
+            for line in f:
+                parts = line.split()
+                if len(parts) < 6:
+                    continue
+                hex_addr, _, hex_prefix, _, _, iface = parts[:6]
+                addr = str(IPv6Address(int(hex_addr, 16)))
+                prefix = int(hex_prefix, 16)
+                addrs.setdefault(iface, []).append({
+                    'family': 'IPv6',
+                    'address': addr,
+                    'netmask': str(prefix),
+                })
+    except Exception:
+        pass
+    return addrs
 
 # IMPORTANT INFO
 # these next few functions and variables are all literally copy and pasted
