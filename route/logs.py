@@ -22,6 +22,10 @@ def es_client():
 
 def fmt_record(src: dict, doc_id: str = None) -> dict:
     protocol_num = src.get('protocol')
+    try:
+        protocol_num = int(protocol_num)
+    except (TypeError, ValueError):
+        pass
     record = {
         'timestamp': src.get('timestamp'),
         'host_ip': src.get('host_ip'),
@@ -57,7 +61,7 @@ async def getLogs(
                 'fields': ['src_ip', 'dest_ip', 'host_ip', 'src_mac', 'dest_mac'],
                 # 'fields': ['src_ip', 'dest_ip', 'host_ip', 'src_mac', 'dest_mac'],
                 'type': 'phrase_prefix',
-                
+
             }
         })
 
