@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from route import health, logs, network
+from route import health, logs, network, threats
 
 app = FastAPI(title='Abeonasec API')
 
@@ -15,3 +15,4 @@ app.add_middleware(
 app.include_router(health.router)
 app.include_router(logs.router)
 app.include_router(network.router)
+app.include_router(threats.router)
