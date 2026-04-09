@@ -6,7 +6,7 @@ from fastapi import APIRouter
 import psutil
 from elasticsearch import AsyncElasticsearch
 
-from .netutils import net_io_counters, get_host_iface_meta, get_host_iface_v6
+from .netutils import net_io_counters, get_host_iface_meta, get_host_iface_v4, get_host_iface_v6
 
 router = APIRouter()
 
@@ -54,20 +54,18 @@ def get_connections():
 
 
 def get_interfaces(host_iface_names: list[str]):
-    # IPv4 from psutil
-    # IPv6 from /proc/1/net/if_inet6 
+    # IPv4 from /proc/1/net/fib_trie + route (host namespace)
+    # IPv6 from /proc/1/net/if_inet6 (host namespace)
     meta = get_host_iface_meta(host_iface_names)
+    v4_addrs = get_host_iface_v4()
     v6_addrs = get_host_iface_v6()
-    psutil_addrs = psutil.net_if_addrs()
     result = []
     for name in host_iface_names:
         m = meta.get(name, {})
         iface_addrs = []
         if m.get('mac'):
             iface_addrs.append({'family': 'MAC', 'address': m['mac'], 'netmask': None})
-        for addr in psutil_addrs.get(name, []):
-            if addr.family == socket.AF_INET:
-                iface_addrs.append({'family': 'IPv4', 'address': addr.address, 'netmask': addr.netmask})
+        iface_addrs.extend(v4_addrs.get(name, []))
         iface_addrs.extend(v6_addrs.get(name, []))
         result.append({
             'name': name,

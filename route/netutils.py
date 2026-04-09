@@ -1,5 +1,7 @@
+import re
+import socket as _socket
 import sys
-from ipaddress import IPv6Address
+from ipaddress import IPv4Address, IPv6Address
 
 FILE_READ_BUFFER_SIZE = 32 * 1024
 ENCODING = sys.getfilesystemencoding()
@@ -32,6 +34,69 @@ def get_host_iface_meta(iface_names):
             mtu = None
         mac = _sysfs_read(name, 'address')
         result[name] = {'isup': isup, 'speed_mbps': speed, 'mtu': mtu, 'mac': mac}
+    return result
+
+
+def get_host_iface_v4(proc_path=PROC_1_PATH):  # proc_path kept for testability
+    RTF_GATEWAY = 0x0002
+    iface_networks: dict[str, list] = {}
+    try:
+        with open_text(f'{proc_path}/net/route') as f:
+            for line in f:
+                parts = line.split()
+                if len(parts) < 8 or parts[0] == 'Iface':
+                    continue
+
+                flags = int(parts[3], 16)
+                mask_le = int(parts[7], 16)
+                if (flags & RTF_GATEWAY) or mask_le == 0:
+                    continue
+                iface = parts[0]
+                dest_int = int.from_bytes(int(parts[1], 16).to_bytes(4, 'little'), 'big')
+                mask_int = int.from_bytes(mask_le.to_bytes(4, 'little'), 'big')
+                netmask_str = _socket.inet_ntoa(mask_int.to_bytes(4, 'big'))
+                iface_networks.setdefault(iface, []).append((dest_int, mask_int, netmask_str))
+    except Exception:
+        return {}
+
+    if 'lo' not in iface_networks:
+        iface_networks['lo'] = [(0x7F000000, 0xFF000000, '255.0.0.0')]
+
+    local_addrs: list[str] = []
+    try:
+        with open_text(f'{proc_path}/net/fib_trie') as f:
+            in_local = False
+            last_ip = None
+            for line in f:
+                stripped = line.strip()
+                if stripped == 'Local:':
+                    in_local = True
+                    continue
+                if not in_local:
+                    continue
+                if stripped.startswith('|--'):
+                    m = re.match(r'\|--\s+(\d+\.\d+\.\d+\.\d+)$', stripped)
+                    last_ip = m.group(1) if m else None
+                elif stripped.startswith('+--'):
+                    last_ip = None
+                elif last_ip and stripped.startswith('/32 host LOCAL'):
+                    local_addrs.append(last_ip)
+                    last_ip = None
+    except Exception:
+        return {}
+
+    result: dict[str, list] = {}
+    for addr_str in local_addrs:
+        addr_int = int(IPv4Address(addr_str))
+        for iface, networks in iface_networks.items():
+            for dest_int, mask_int, netmask_str in networks:
+                if (addr_int & mask_int) == dest_int:
+                    result.setdefault(iface, []).append({
+                        'family': 'IPv4',
+                        'address': addr_str,
+                        'netmask': netmask_str,
+                    })
+                    break
     return result
 
 
