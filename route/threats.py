@@ -57,7 +57,7 @@ async def getThreats(
     if severity == 'critical':
         must.append({'term': {'probs': True}})
     elif severity == 'warning':
-        # placeholder — no plugin emits warning level yet, return nothing
+        # placeholder no plugin emits warn yet
         return {'total': 0, 'threats': []}
 
     if search:

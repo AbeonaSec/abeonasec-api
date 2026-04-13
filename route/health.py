@@ -35,10 +35,20 @@ def get_gpu():
         pass
     return None
 
+def bytes_conv(num_bytes):
+    units = ['B', 'KB', 'MB', 'GB', 'TB', 'PB', 'XB', 'ZB', 'YB']
+    i = 0
+    # Use 1024 for binary prefixes
+    while num_bytes >= 1024 and i < len(units) - 1:
+        num_bytes /= 1024
+        i += 1
+    return f"{num_bytes:.2f} {units[i]}"
+
 @router.get('/health')
 async def getHealth():
     cpu = psutil.cpu_percent(interval=0.5)
     mem = psutil.virtual_memory()
+    swap = psutil.swap_memory()
     disk = psutil.disk_usage('/')
     net = net_io_counters()
     # net now has bytes sent and recv data for all interfaces
@@ -69,6 +79,11 @@ async def getHealth():
             'used_gb': round(mem.used / 1e9, 1),
             'percent': mem.percent,
         },
+        'swap': {
+            'total_gb': round(swap.total / 1e9, 1),
+            'used_gb': round(swap.used / 1e9, 1),
+            'percent': swap.percent,
+        },
         'disk': {
             'total_gb': round(disk.total / 1e9, 1),
             'used_gb': round(disk.used / 1e9, 1),
@@ -77,8 +92,8 @@ async def getHealth():
         'network': {
             'bytes_sent': bytes_sent,
             'bytes_recv': bytes_recv,
-            'mb_sent': round(bytes_sent / 1e6, 1),
-            'mb_recv': round(bytes_recv / 1e6, 1),
+            'sent': bytes_conv(bytes_sent),
+            'recv': bytes_conv(bytes_recv),
         },
         'gpu': gpu,
     }
