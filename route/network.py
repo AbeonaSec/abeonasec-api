@@ -16,7 +16,7 @@ ES_INDEX = 'plugin-abp'
 
 def es_client():
     return AsyncElasticsearch(
-        'https://host.containers.internal:9200',
+        'https://localhost:9200',
         basic_auth=('elastic', 'placeholder123'),
         verify_certs=False,
         ssl_show_warn=False,
