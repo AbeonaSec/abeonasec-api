@@ -39,7 +39,7 @@ def _default_interface() -> str:
 
 def _container_running(container_name: str) -> bool:
     try:
-        r = subprocess.run(["podman", "ps", "--format", "{{.Names}}"],
+        r = subprocess.run(["docker", "ps", "--format", "{{.Names}}"],
                            capture_output=True, text=True)
         return container_name in r.stdout
     except FileNotFoundError:
@@ -73,7 +73,7 @@ PLUGIN_REGISTRY = [
     {
         "id": "abp",
         "name": "Anomalous Behavior Profiling",
-        "description": "ML-based network anomaly detection using live packet capturen.",
+        "description": "ML-based network anomaly detection using live packet capture.",
         "repo": "https://github.com/AbeonaSec/abeonasec-plugin-abp.git",
         "install_path": "/opt/abeonasec/plugins/abp",
         "container_name": "plugin-abp",
@@ -153,7 +153,7 @@ def enable_plugin(plugin_id: str):
     if _plugin_status(plugin) == "not_installed":
         raise HTTPException(status_code=400, detail="Plugin is not installed")
 
-    r = subprocess.run(["podman", "start", plugin["container_name"]],
+    r = subprocess.run(["docker", "start", plugin["container_name"]],
                        capture_output=True, text=True)
     if r.returncode != 0:
         raise HTTPException(status_code=500, detail=r.stderr)
@@ -166,7 +166,7 @@ def enable_plugin(plugin_id: str):
 def disable_plugin(plugin_id: str):
     plugin = _get_plugin(plugin_id)
 
-    r = subprocess.run(["podman", "stop", plugin["container_name"]],
+    r = subprocess.run(["docker", "stop", plugin["container_name"]],
                        capture_output=True, text=True)
     if r.returncode != 0:
         raise HTTPException(status_code=500, detail=r.stderr)

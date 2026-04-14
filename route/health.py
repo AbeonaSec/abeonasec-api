@@ -47,6 +47,7 @@ def bytes_conv(num_bytes):
 @router.get('/health')
 async def getHealth():
     cpu = psutil.cpu_percent(interval=0.5)
+    cores = psutil.cpu_percent(interval=0.5, percpu=True)
     mem = psutil.virtual_memory()
     swap = psutil.swap_memory()
     disk = psutil.disk_usage('/')
@@ -74,6 +75,7 @@ async def getHealth():
         'cpu': {
             'percent': cpu,
         },
+        'cores': cores,
         'memory': {
             'total_gb': round(mem.total / 1e9, 1),
             'used_gb': round(mem.used / 1e9, 1),
