@@ -1,6 +1,6 @@
 # using ubuntu container so we can install nvidia server utils for gpu monitoring
 FROM ubuntu:24.04
-RUN apt-get update && apt-get install -y curl git python3 python3-pip nvidia-utils-535-server iproute2 netcat && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y curl git python3 python3-pip nvidia-utils-535-server iproute2 netcat-openbsd && rm -rf /var/lib/apt/lists/*
 
 RUN install -m 0755 -d /etc/apt/keyrings &&\
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg &&\
