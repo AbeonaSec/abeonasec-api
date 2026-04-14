@@ -27,4 +27,4 @@ COPY ../main.py .
 # this is for the github workflow
 
 # run api on container start
-CMD ["uvicorn", "main:app", "--host", "localhost", "--port", "8000"]
+CMD ["uvicorn", "main:app", "--host", "localhost", "--port", "8005"]
